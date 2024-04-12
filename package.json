@@ -1,0 +1,13 @@
+{
+  "name": "comengess-final-project-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server.js",
+  "type": "module",
+  "repository": "https://github.com/yokeTH/ComEngEss-final-project-frontend",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

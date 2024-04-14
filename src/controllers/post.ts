@@ -3,8 +3,11 @@ import { Request, Response } from 'express';
 const prisma = new PrismaClient();
 
 export const getPosts = async (req: Request, res: Response) => {
-  const posts = await prisma.post.findMany();
+  const posts = await prisma.post.findMany({
+    include:{tags:true,topic:true}
+  });
   res.status(200).json(posts);
+  console.log(posts);
 };
 
 export const getPostsById = async (req: Request, res: Response) => {
@@ -33,8 +36,18 @@ export const createPost = async (req: Request, res: Response) => {
   const post = await prisma.post.create({
     data: {
       user: {
-        connect: {
-          id: userId,
+        connectOrCreate: {
+          //id: userId,
+          where:{
+            username:userId,
+            email:"sw",
+            password:"ad"
+          },
+          create:{
+            username:userId,
+            email:"sw",
+            password:"ad"
+          }
         },
       },
       photoUrl: photoUrl,
@@ -62,4 +75,5 @@ export const createPost = async (req: Request, res: Response) => {
       },
     },
   });
+  res.status(200).json(post);
 };

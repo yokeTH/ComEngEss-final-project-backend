@@ -29,8 +29,8 @@ model Post {
   userId      String @db.ObjectId
   topic       Topic  @relation(fields: [topicId], references: [id])
   topicId     String @db.ObjectId
-  tags        Tag    @relation(fields: [tagId], references: [id])
-  tagId       String @db.ObjectId
+  tags        Tag[]  @relation(fields: [tagId], references: [id])
+  tagId       String[] @db.ObjectId
   photoUrl    String
   description String
   createdAt DateTime @default(now())
@@ -49,7 +49,11 @@ model Tag {
   id    String @id @default(auto()) @map("_id") @db.ObjectId
   name  String @unique
   score Int
-  posts Post[]
+  posts Post[] @relation(fields: [postIds], references: [id])
+  postIds String[] @db.ObjectId 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+// model Tagpost{
+
+// }

@@ -18,10 +18,22 @@ export const getPostsById = async (req: Request, res: Response) => {
 };
 
 export const getPostsByTag = async (req: Request, res: Response) => {
+  let filteredId:string[] = []; 
   const posts = await prisma.post.findMany({
-    where: { tags: { name: req.params.name } },
+    include:{tags:true}
   });
-  res.status(200).json(posts);
+  for(let i = 0;i<posts.length;i++){
+    for(let j = 0;j<posts[i].tags.length;j++){
+      if(posts[i].tags[j].name == req.params.name){
+        filteredId.push(posts[i].id)
+      }
+    }
+  }
+  const filteredPosts = await prisma.post.findMany({
+    where:{id:{in:filteredId}},
+    include:{tags:true,topic:true}
+  })
+  res.status(200).json(filteredPosts);
 };
 
 export const getPostsByTopic = async (req: Request, res: Response) => {

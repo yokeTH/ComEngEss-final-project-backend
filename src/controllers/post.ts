@@ -11,14 +11,19 @@ export const getPosts = async (req: Request, res: Response) => {
 };
 
 export const getPostsById = async (req: Request, res: Response) => {
-  const posts = await prisma.post.findMany({
-    where: { id: req.params.id },
-  });
-  res.status(200).json(posts);
+  try{
+    const posts = await prisma.post.findMany({
+      where: { id: req.params.id }
+    });
+    res.status(200).json(posts);
+  }catch(e){
+    console.log(e)
+    res.sendStatus(500)
+  }
 };
 
 export const getPostsByTag = async (req: Request, res: Response) => {
-  let filteredId:string[] = []; 
+  let filteredId:string[] = [];
   const posts = await prisma.post.findMany({
     include:{tags:true}
   });

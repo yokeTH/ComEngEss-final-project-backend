@@ -1,16 +1,17 @@
 import express from 'express';
-import { getPosts, getPostsById, getPostsByTag, getPostsByTopic, createPost } from './controllers/post';
+import PostRoute from './routes/postRoute';
+import cors from 'cors';
+
 const app = express();
 
+//body-praser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.get('/', (req: Request, res: Response) => {
-//   res.json({ status: new Date(Date.now()).toTimeString() });
-// });
-app.get('/', getPosts);
-app.get('/:id', getPostsById);
-app.get('/tag/:name', getPostsByTag);
-app.get('/topic/:name', getPostsByTopic);
-app.post('/', createPost);
+
+// allow request from other origin (Frontend which is at different port)
+app.use(cors());
+
+// use routes
+app.use('/posts', PostRoute);
 
 export default app;

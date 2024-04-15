@@ -1,5 +1,6 @@
 import express from 'express';
 import PostRoute from './routes/postRoute';
+import UserRoute from './routes/userRoute';
 import cors from 'cors';
 
 const app = express();
@@ -12,6 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // use routes
-app.use('/posts', PostRoute);
+app.use('/post', PostRoute);
+app.use('/user', UserRoute);
 
 export default app;

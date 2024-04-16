@@ -4,67 +4,54 @@ const prisma = new PrismaClient();
 
 export const getPosts = async (req: Request, res: Response) => {
   const posts = await prisma.post.findMany({
-    include:{tags:true,topic:true}
+    include: { tags: true, topic: true },
   });
   res.status(200).json(posts);
   console.log(posts);
 };
 
 export const getPostsById = async (req: Request, res: Response) => {
-  try{
+  try {
     const posts = await prisma.post.findMany({
-      where: { id: req.params.id }
+      where: { id: req.params.id },
     });
     res.status(200).json(posts);
-  }catch(e){
-    console.log(e)
-    res.sendStatus(500)
+  } catch (e) {
+    console.log(e);
+    res.sendStatus(500);
   }
 };
 
 export const getPostsByTag = async (req: Request, res: Response) => {
-  let filteredId:string[] = [];
   const posts = await prisma.post.findMany({
-    include:{tags:true}
+    where: {
+      tags: {
+        some: {
+          tag: {
+            name: req.params.name,
+          },
+        },
+      },
+    },
   });
-  for(let i = 0;i<posts.length;i++){
-    for(let j = 0;j<posts[i].tags.length;j++){
-      if(posts[i].tags[j].name == req.params.name){
-        filteredId.push(posts[i].id)
-      }
-    }
-  }
-  const filteredPosts = await prisma.post.findMany({
-    where:{id:{in:filteredId}},
-    include:{tags:true,topic:true}
-  })
-  res.status(200).json(filteredPosts);
+  res.status(200).json(posts);
 };
 
 export const getPostsByTopic = async (req: Request, res: Response) => {
   const posts = await prisma.post.findMany({
     where: { topic: { name: req.params.name } },
+    include: { tags: true, topic: true },
   });
   res.status(200).json(posts);
 };
 
 export const createPost = async (req: Request, res: Response) => {
-  const { userId, topicName, tagName, photoUrl, description, tagScore } = req.body;
+  const { userId, topicName, tags, photoUrl, description } = req.body;
   const post = await prisma.post.create({
     data: {
       user: {
-        connectOrCreate: {
-          //id: userId,
-          where:{
-            username:userId,
-            email:"sw",
-            password:"ad"
-          },
-          create:{
-            username:userId,
-            email:"sw",
-            password:"ad"
-          }
+        connect: {
+          id: userId,
         },
       },
       photoUrl: photoUrl,
@@ -80,15 +67,14 @@ export const createPost = async (req: Request, res: Response) => {
         },
       },
       tags: {
-        connectOrCreate: {
-          create: {
-            name: tagName,
-            score: tagScore,
+        create: tags.map((tag: { name: unknown; score: unknown }) => ({
+          tag: {
+            connectOrCreate: {
+              where: { name: tag.name },
+              create: { name: tag.name, score: tag.score },
+            },
           },
-          where: {
-            name: tagName,
-          },
-        },
+        })),
       },
     },
   });

@@ -11,7 +11,8 @@
     "dev": "nodemon",
     "build": "tsc && tsc-alias",
     "lint": "eslint src/*",
-    "lint:fix": "npm run lint -- --fix"
+    "lint:fix": "npm run lint -- --fix",
+    "postinstall": "prisma generate"
   },
   "author": "",
   "license": "ISC",

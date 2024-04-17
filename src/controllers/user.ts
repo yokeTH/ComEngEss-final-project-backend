@@ -1,4 +1,4 @@
-import { Post, PrismaClient, User } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -17,8 +17,10 @@ export const createUser = async (req: Request, res: Response) => {
       },
     });
     res.status(200).json(user);
-  } catch (e: any) {
-    res.status(500).json({ message: e.name });
+  } catch (e: unknown) {
+    if (e) {
+      res.status(500).json();
+    }
   }
 };
 

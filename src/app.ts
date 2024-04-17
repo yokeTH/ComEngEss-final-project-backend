@@ -1,11 +1,14 @@
-import express from 'express';
 import PostRoute from './routes/postRoute';
 import UserRoute from './routes/userRoute';
 import cors from 'cors';
+import express from 'express';
+import logMiddleware from './middlewares/logMiddleware';
+
+//body-praser
 
 const app = express();
 
-//body-praser
+app.use(logMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

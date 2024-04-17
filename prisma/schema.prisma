@@ -30,6 +30,7 @@ model Post {
   topic       Topic     @relation(fields: [topicId], references: [id])
   topicId     String    @db.ObjectId
   tags        PostTag[]
+  photoKey    String
   photoUrl    String
   description String
   createdAt   DateTime  @default(now())

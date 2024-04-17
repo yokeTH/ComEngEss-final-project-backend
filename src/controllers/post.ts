@@ -1,8 +1,9 @@
-import { Post, PrismaClient } from '@prisma/client';
+
 import { NextFunction, Request, Response } from 'express';
 import { uploadFile,getUrl } from '@/services/storage';
 // import HttpException from '@/exceptions/httpException';
 // import { HttpClientError } from '@/enums/http';
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const getPosts = async (req: Request, res: Response) => {

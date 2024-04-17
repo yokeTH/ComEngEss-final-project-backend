@@ -4,7 +4,6 @@
   "description": "",
   "main": "dist/server.js",
   "repository": "https://github.com/yokeTH/ComEngEss-final-project-frontend",
-  "type": "module",
   "scripts": {
     "prepare": "husky",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -12,7 +11,8 @@
     "dev": "nodemon",
     "build": "tsc && tsc-alias",
     "lint": "eslint src/*",
-    "lint:fix": "npm run lint -- --fix"
+    "lint:fix": "npm run lint -- --fix",
+    "postinstall": "prisma generate"
   },
   "author": "",
   "license": "ISC",

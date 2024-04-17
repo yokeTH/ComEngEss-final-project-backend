@@ -1,19 +1,8 @@
-export enum HttpError {
-  BadRequest = 400,
-  Unauthorized = 401,
-  Forbidden = 403,
-  NotFound = 404,
-  MethodNotAllowed = 405,
-  InternalServerError = 500,
-  NotImplemented = 501,
-  BadGateway = 502,
-  ServiceUnavailable = 503,
-}
-
+import { HttpClientError, HttpServerError } from '@/enums/http';
 export default class HttpException extends Error {
-  public status: HttpError;
+  public status: HttpClientError | HttpServerError;
   public message: string;
-  constructor(message?: string, status?: HttpError) {
+  constructor(message?: string, status?: HttpClientError | HttpServerError) {
     super(message);
     this.status = status || 500;
     this.message = message || 'Internal Server Error';

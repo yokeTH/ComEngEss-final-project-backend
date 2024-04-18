@@ -6,7 +6,7 @@ import HttpException from '@/exceptions/httpException';
 import { HttpClientError, HttpServerError, HttpSuccess } from '@/enums/http';
 import { authorize } from '@/utils/authorizer';
 import { createPostCheck, parseIntPlus } from '@/utils/zodChecker';
-import z, { ZodError } from 'zod';
+import { ZodError } from 'zod';
 
 const prisma = new PrismaClient();
 
@@ -72,6 +72,9 @@ export const getPostsByTag = async (req: Request, res: Response, next: NextFunct
 
 export const getPostsByTopic = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { authorization } = req.headers;
+    if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    await authorize(authorization);
     const posts = await prisma.post.findMany({
       where: { topic: { name: req.params.name } },
       include: { tags: { include: { tag: true } }, topic: true },

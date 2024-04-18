@@ -3,6 +3,7 @@ import UserRoute from './routes/userRoute';
 import cors from 'cors';
 import express from 'express';
 import logMiddleware from './middlewares/logMiddleware';
+import { errorMiddleware } from './middlewares/errorMiddleware';
 
 //body-praser
 
@@ -18,5 +19,5 @@ app.use(cors());
 // use routes
 app.use('/post', PostRoute);
 app.use('/user', UserRoute);
-
+app.use(errorMiddleware);
 export default app;

@@ -1,12 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import { NextFunction, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { Secret } from 'jsonwebtoken';
+import jwt, { Secret } from 'jsonwebtoken';
 import HttpException from '@/exceptions/httpException';
 import { HttpClientError, HttpSuccess } from '@/enums/http';
 import { SuccessResponseDto } from '@/dtos/response';
-import z, { ZodError } from 'zod';
+import { ZodError } from 'zod';
 import { createUserCheck, loginUserCheck } from '@/utils/zodChecker';
 
 const prisma = new PrismaClient();

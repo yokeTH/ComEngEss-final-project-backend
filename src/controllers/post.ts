@@ -1,108 +1,140 @@
-
 import { NextFunction, Request, Response } from 'express';
-import { uploadFile,getUrl } from '@/services/storage';
-// import HttpException from '@/exceptions/httpException';
-// import { HttpClientError } from '@/enums/http';
+import { uploadFile, getUrl } from '@/services/storage';
 import { PrismaClient } from '@prisma/client';
+import { SuccessResponseDto } from '@/dtos/response';
+import HttpException from '@/exceptions/httpException';
+import { HttpClientError, HttpServerError, HttpSuccess } from '@/enums/http';
+import { authorize } from '@/utils/authorizer';
+import { createPostCheck, parseIntPlus } from '@/utils/zodChecker';
+import z, { ZodError } from 'zod';
+
 const prisma = new PrismaClient();
 
-export const getPosts = async (req: Request, res: Response) => {
-  const updatedPost = await prisma.post.updateMany({
-    data:{
-      photoUrl:"1"
-    }
-  })
-  const posts = await prisma.post.findMany({
-    include: { tags: true, topic: true },
-  });
-  res.status(200).json(posts);
-  console.log(posts);
-};
-
-export const getPostsById = async (req: Request, res: Response) => {
+export const getPosts = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { authorization } = req.headers;
+    if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    await authorize(authorization);
     const posts = await prisma.post.findMany({
-      where: { id: req.params.id },
+      include: { tags: { include: { tag: true } }, topic: true },
     });
-    res.status(200).json(posts);
-  } catch (e) {
-    console.log(e);
-    res.sendStatus(500);
+    const updated = await Promise.all(posts.map(async (post) => ({ ...post, photoUrl: await getUrl(post.photoKey) })));
+    res.json(new SuccessResponseDto(updated));
+  } catch (e: unknown) {
+    next(e);
   }
 };
 
-export const getPostsByTag = async (req: Request, res: Response) => {
-  const posts = await prisma.post.findMany({
-    where: {
-      tags: {
-        some: {
-          tag: {
-            name: req.params.name,
-          },
-        },
-      },
-    },
-  });
-  res.status(200).json(posts);
+export const getPostsById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { authorization } = req.headers;
+    if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    await authorize(authorization);
+    const id = req.params.id;
+    const posts = await prisma.post.findMany({
+      where: { id: id },
+      include: { tags: { include: { tag: true } }, topic: true },
+    });
+    const updated = await Promise.all(posts.map(async (post) => ({ ...post, photoUrl: await getUrl(post.photoKey) })));
+    res.json(new SuccessResponseDto(updated));
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      next(new HttpException(e.message, HttpClientError.BadRequest));
+    } else {
+      next(e);
+    }
+  }
 };
 
-export const getPostsByTopic = async (req: Request, res: Response) => {
-  const posts = await prisma.post.findMany({
-    where: { topic: { name: req.params.name } },
-    include: { tags: true, topic: true },
-  });
-  res.status(200).json(posts);
-};
-
-export const createPost = async (req: Request, res: Response, next:NextFunction) => {
-  // new HttpException("bad",HttpClientError.BadRequest)
-  // console.log(req.file);
-  // await uploadFile(req.file?.buffer!,"abc",req.file?.mimetype!)
-  // const url = await getUrl("abc");
-  // console.log(url);
-
-  const { userId, topicName, tags , description } = req.body;
-  const post = await prisma.post.create({
-    data: {
-      user: {
-        connect: {
-          id: userId,
-        },
-      },
-      photoKey:"",
-      photoUrl: "",
-      description: description,
-      topic: {
-        connectOrCreate: {
-          create: {
-            name: topicName,
-          },
-          where: {
-            name: topicName,
-          },
-        },
-      },
-      tags: {
-        create: tags.map((tag: { name: string; score: string }) => ({
-          tag: {
-            connectOrCreate: {
-              where: { name: tag.name },
-              create: { name: tag.name, score: parseInt(tag.score) },
+export const getPostsByTag = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { authorization } = req.headers;
+    if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    await authorize(authorization);
+    const posts = await prisma.post.findMany({
+      where: {
+        tags: {
+          some: {
+            tag: {
+              name: req.params.name,
             },
           },
-        })),
+        },
       },
-    },
-  });
-  const key = userId+'_'+post.id;
-  await uploadFile(req.file?.buffer!,key,req.file?.mimetype!)
-  const updatedPost = await prisma.post.update({
-    where:{
-      id:post.id
-    },
-    data:{
-      photoKey:key
-    }
-  })
-  res.status(200).json(post);
+      include: { tags: { include: { tag: true } }, topic: true },
+    });
+    const updated = await Promise.all(posts.map(async (post) => ({ ...post, photoUrl: await getUrl(post.photoKey) })));
+    res.json(new SuccessResponseDto(updated));
+  } catch (e: unknown) {
+    next(e);
+  }
+};
+
+export const getPostsByTopic = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const posts = await prisma.post.findMany({
+      where: { topic: { name: req.params.name } },
+      include: { tags: { include: { tag: true } }, topic: true },
+    });
+    const updated = await Promise.all(posts.map(async (post) => ({ ...post, photoUrl: await getUrl(post.photoKey) })));
+    res.json(new SuccessResponseDto(updated));
+  } catch (e: unknown) {
+    next(e);
+  }
+};
+
+export const createPost = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { topicName, tags, description } = req.body;
+    const { authorization } = req.headers;
+    if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    const userId = await authorize(authorization!);
+    createPostCheck(topicName, tags, description);
+    const post = await prisma.post.create({
+      data: {
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+        photoKey: '',
+        photoUrl: '',
+        description: description,
+        topic: {
+          connectOrCreate: {
+            create: {
+              name: topicName,
+            },
+            where: {
+              name: topicName,
+            },
+          },
+        },
+        tags: {
+          create: tags.map((tag: { name: string; score: string }) => ({
+            tag: {
+              connectOrCreate: {
+                where: { name: tag.name },
+                create: { name: tag.name, score: parseIntPlus(tag.score) },
+              },
+            },
+          })),
+        },
+      },
+    });
+    const key = userId + '_' + post.id;
+    await uploadFile(req.file?.buffer!, key, req.file?.mimetype!);
+    const updatedPost = await prisma.post.update({
+      where: {
+        id: post.id,
+      },
+      data: {
+        photoKey: key,
+      },
+      include: { tags: { include: { tag: true } }, topic: true },
+    });
+    res.json(new SuccessResponseDto(updatedPost, HttpSuccess.Created));
+  } catch (e: unknown) {
+    next(e);
+  }
 };

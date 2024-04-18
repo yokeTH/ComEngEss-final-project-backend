@@ -1,46 +1,60 @@
 import { PrismaClient } from '@prisma/client';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Secret } from 'jsonwebtoken';
+import HttpException from '@/exceptions/httpException';
+import { HttpClientError, HttpSuccess } from '@/enums/http';
+import { SuccessResponseDto } from '@/dtos/response';
+import z, { ZodError } from 'zod';
+import { createUserCheck, loginUserCheck } from '@/utils/zodChecker';
 
 const prisma = new PrismaClient();
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const { password, username, email } = req.body;
+    createUserCheck(username, password, email);
+    const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
-        username: req.body.username,
+        username: username,
         password: hashedPassword,
-        email: req.body.email,
+        email: email,
       },
     });
-    res.status(200).json(user);
+    res.json(new SuccessResponseDto(user, HttpSuccess.Created));
   } catch (e: unknown) {
-    if (e) {
-      res.status(500).json();
+    if (e instanceof ZodError) {
+      next(new HttpException(e.message, HttpClientError.BadRequest));
+    } else {
+      next(e);
     }
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { password, username } = req.body;
+    loginUserCheck(username, password);
     const user = await prisma.user.findFirst({
-      where: { username: req.body.username },
+      where: { username: username },
     });
     if (!user) {
-      // If no user found, return appropriate response
-      return res.json({ message: 'User not found' });
+      throw new HttpException('username not found', HttpClientError.BadRequest);
     }
-    const match = await bcrypt.compare(req.body.password, user.password);
+    const match = await bcrypt.compare(password, user.password);
     if (match) {
       const accessToken = jwt.sign(JSON.stringify(user.id), process.env.TOKEN_SECRET as Secret);
-      res.json({ accessToken: accessToken });
+      res.json(new SuccessResponseDto({ accessToken: accessToken }, HttpSuccess.Created));
     } else {
-      res.json({ message: 'Invalid Credentials' });
+      throw new HttpException('wrong password', HttpClientError.BadRequest);
     }
-  } catch (e) {
-    console.log(e);
+  } catch (e: unknown) {
+    if (e instanceof ZodError) {
+      next(new HttpException(e.message, HttpClientError.BadRequest));
+    } else {
+      next(e);
+    }
   }
 };

@@ -93,7 +93,7 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
     const userId = await authorize(authorization!);
-    createPostCheck(topicName, tags, description, req.file!.mimetype);
+    createPostCheck(topicName, tags, description, req.file?.mimetype);
     const post = await prisma.post.create({
       data: {
         user: {

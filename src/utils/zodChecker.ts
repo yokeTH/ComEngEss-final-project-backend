@@ -21,6 +21,7 @@ const createPostSchema = z.object({
     })
     .array(),
   description: z.string(),
+  mimeType: z.string().startsWith('image/', { message: 'Must provide image file' }),
 });
 
 //function
@@ -44,11 +45,12 @@ export const loginUserCheck = (username: unknown, password: unknown) => {
   }
 };
 
-export const createPostCheck = (topicName: unknown, tags: unknown, description: unknown) => {
+export const createPostCheck = (topicName: unknown, tags: unknown, description: unknown, mimeType: unknown) => {
   const result = createPostSchema.safeParse({
     topicName: topicName,
     tags: tags,
     description: description,
+    mimeType: mimeType,
   });
   if (!result.success) {
     throw new HttpException(result.error.flatten().fieldErrors as string, HttpClientError.BadRequest);

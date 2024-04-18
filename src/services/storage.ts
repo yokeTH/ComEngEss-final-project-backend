@@ -1,5 +1,4 @@
 import S3 from 'aws-sdk/clients/s3.js';
-import { readFile } from 'fs/promises';
 
 const s3 = new S3({
   endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,

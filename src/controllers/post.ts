@@ -3,7 +3,7 @@ import { uploadFile, getUrl } from '@/services/storage';
 import { PrismaClient } from '@prisma/client';
 import { SuccessResponseDto } from '@/dtos/response';
 import HttpException from '@/exceptions/httpException';
-import { HttpClientError, HttpServerError, HttpSuccess } from '@/enums/http';
+import { HttpClientError, HttpSuccess } from '@/enums/http';
 import { authorize } from '@/utils/authorizer';
 import { createPostCheck, parseIntPlus } from '@/utils/zodChecker';
 import { ZodError } from 'zod';
@@ -92,7 +92,7 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
     const userId = await authorize(authorization!);
-    createPostCheck(topicName, tags, description);
+    createPostCheck(topicName, tags, description, req.file?.mimetype);
     const post = await prisma.post.create({
       data: {
         user: {
@@ -116,9 +116,9 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
         tags: {
           create: tags.map((tag: { name: string; score: string }) => ({
             tag: {
-              connectOrCreate: {
-                where: { name: tag.name },
-                create: { name: tag.name, score: parseIntPlus(tag.score) },
+              create: {
+                name: tag.name,
+                score: parseIntPlus(tag.score),
               },
             },
           })),

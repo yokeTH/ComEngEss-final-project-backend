@@ -44,7 +44,6 @@ export const getPostsByTag = async (req: Request, res: Response, next: NextFunct
     await authorize(authorization);
     const { name } = req.params;
     const tags = await Tag.find({ name: name }).exec();
-
     // Extract tag IDs
     const tagIds = tags.map((tag: { _id: any }) => tag._id);
 
@@ -88,8 +87,12 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     const { topicName, tags, description, image } = req.body;
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    if (!topicName) throw new HttpException('require topic name', HttpClientError.BadRequest);
+    if (!description) throw new HttpException('require description', HttpClientError.BadRequest);
+    if (!tags) throw new HttpException('require tags', HttpClientError.BadRequest);
+    if (!image) throw new HttpException('require image', HttpClientError.BadRequest);
     const { userId } = await authorize(authorization);
-
+    
     // Create post
     const post: typeof Post = await Post.create({
       user: userId,

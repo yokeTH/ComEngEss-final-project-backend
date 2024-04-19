@@ -18,6 +18,6 @@ app.use(cors());
 
 // use routes
 app.use('/posts', PostRoute);
-app.use('/users', UserRoute);
+app.use('/user', UserRoute);
 app.use(errorMiddleware);
 export default app;

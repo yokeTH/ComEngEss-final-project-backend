@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+
 import { NextFunction, Request, Response } from 'express';
 import { bcryptHash,bcryptCompare } from '@/utils/bcrypt';
-import { jwtSign,jwtVerify } from '@/services/jwt';
+import { jwtSign } from '@/services/jwt';
 import HttpException from '@/exceptions/httpException';
 import { HttpClientError, HttpSuccess } from '@/enums/http';
 import { SuccessResponseDto } from '@/dtos/response';
@@ -15,14 +15,6 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
   try {
     const { password, username, email } = req.body;
     createUserCheck(username, password, email);
-    // const existingUser = await prisma.user.findMany({
-    //   where: {
-    //     OR: [{ username: username }, { email: email }],
-    //   },
-    // });
-    // if (existingUser.length !== 0) {
-    //   throw new HttpException('Username or email already exists', HttpClientError.BadRequest);
-    // }
     const hashedPassword = await bcryptHash(password, 10);
     const user = await User.create({
         username: username,

@@ -1,13 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import { uploadFile, getUrl } from '@/services/storage';
-import { PrismaClient } from '@prisma/client';
 import { SuccessResponseDto } from '@/dtos/response';
 import HttpException from '@/exceptions/httpException';
 import { HttpClientError, HttpSuccess } from '@/enums/http';
 import { authorize } from '@/utils/authorizer';
-import { createPostCheck, parseIntPlus } from '@/utils/zodChecker';
-import { any, string, ZodError } from 'zod';
-
+import { parseIntPlus } from '@/utils/zodChecker';
 import { User, Post, Topic, Tag } from '@/models/dbShema';
 import { updatePhotoUrls } from '@/utils/urlUpdater';
 

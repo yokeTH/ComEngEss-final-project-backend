@@ -1,18 +1,14 @@
 import HttpException from '@/exceptions/httpException';
-import jwt, { Secret } from 'jsonwebtoken';
+import { jwtVerify } from '@/services/jwt';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const authorize = async (token: string) => {
+export const authorize = async (token:string) => {
   let userId: string | undefined;
-  await jwt.verify(token, process.env.TOKEN_SECRET as Secret, async (err: unknown, decoded) => {
-    if (err instanceof Error) {
-      throw new HttpException(err.message, 403);
-    }
-    userId = decoded as string;
-  });
-  userId = userId!.replace(/"/g, ''); // replace " with ''
-
-  return userId;
+  console.log(process.env.TOKEN_SECRET!)
+  const payload = await jwtVerify(token, process.env.TOKEN_SECRET!)
+  //userId = userId!.replace(/"/g, ''); // replace " with ''
+  console.log(payload)
+  return payload;
 };

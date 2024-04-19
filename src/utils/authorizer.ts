@@ -6,9 +6,10 @@ const prisma = new PrismaClient();
 
 export const authorize = async (token:string) => {
   let userId: string | undefined;
-  console.log(process.env.TOKEN_SECRET!)
+  console.log(token)
   const payload = await jwtVerify(token, process.env.TOKEN_SECRET!)
-  //userId = userId!.replace(/"/g, ''); // replace " with ''
+  
+  console.log("token verified")
   console.log(payload)
   return payload;
 };

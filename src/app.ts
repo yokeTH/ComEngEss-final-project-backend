@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // use routes
-app.use('/post', PostRoute);
-app.use('/user', UserRoute);
+app.use('/posts', PostRoute);
+app.use('/users', UserRoute);
 app.use(errorMiddleware);
 export default app;

@@ -54,7 +54,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const match = await bcryptCompare(password, user.password);
     if (match) {
       // Generate access token
-      const exptime:number = Math.floor(Date.now() / 1000) + (60 * 60)
+      const exptime:number = Math.floor(Date.now() / 1000) + (10*60 * 60)
       const accessToken = await jwtSign({ userId: user._id, exp:exptime }, process.env.TOKEN_SECRET!);
       res.json(new SuccessResponseDto({
         iat: Date.now(),

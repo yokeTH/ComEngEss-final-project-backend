@@ -92,7 +92,7 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     if (!tags) throw new HttpException('require tags', HttpClientError.BadRequest);
     if (!image) throw new HttpException('require image', HttpClientError.BadRequest);
     const { userId } = await authorize(authorization);
-    
+
     // Create post
     const post: typeof Post = await Post.create({
       user: userId,
@@ -113,7 +113,7 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     await topic.save();
 
     const key = userId + '_' + post.id;
-    const imageVariant:string[] = extractDataAndMimeType(image);
+    const imageVariant: string[] = extractDataAndMimeType(image);
     await uploadFile(Buffer.from(imageVariant[0], 'base64'), key, imageVariant[1]);
     //Update user
     const user = await User.findById(userId);

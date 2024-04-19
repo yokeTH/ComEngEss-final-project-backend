@@ -6,6 +6,7 @@ import HttpException from '@/exceptions/httpException';
 import { HttpClientError, HttpSuccess } from '@/enums/http';
 import { SuccessResponseDto } from '@/dtos/response';
 import { User } from '@/models/dbShema';
+import { authorize } from '@/utils/authorizer';
 
 
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -47,7 +48,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         iat: Date.now(),
         exp: exptime,
         access_token: accessToken
-      })); // Assuming you want to send only the access token
+      }));
     } else {
       throw new HttpException('Wrong password', HttpClientError.BadRequest);
     }
@@ -55,3 +56,18 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     next(e);
   }
 };
+
+export const refreshtoken = async(req: Request, res: Response) => {
+  try{
+    const {userId} = await authorize(req.body.token)
+    const exptime:number = Math.floor(Date.now() / 1000) + (10*60 * 60)
+    const accessToken = await jwtSign({ userId: userId, exp:exptime }, process.env.TOKEN_SECRET!);
+    res.json(new SuccessResponseDto({
+      iat: Date.now(),
+      exp: exptime,
+      access_token: accessToken
+    }));
+  }catch (e: unknown) {
+    res.json(new SuccessResponseDto("expired"))
+  }
+}

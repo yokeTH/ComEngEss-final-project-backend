@@ -6,29 +6,16 @@ import { HttpClientError, HttpSuccess } from '@/enums/http';
 import { authorize } from '@/utils/authorizer';
 import { parseIntPlus } from '@/utils/zodChecker';
 import { User, Post, Topic, Tag } from '@/models/dbShema';
-import { updatePhotoUrls } from '@/utils/urlUpdater';
+import { extractDataAndMimeType, updatePhotoUrls } from '@/utils/image';
 
 export const getPosts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
     await authorize(authorization);
-    // Fetch posts using Mongoose
     const posts = await Post.find({}).populate('tags').populate('user').populate('topic').exec();
-    //console.log(posts);
-    // Map through posts to add photoUrl
-    //const updated = await Promise.all(posts.map(async (post:typeof Post) => ({ ...post, photoUrl: await getUrl(post.photoKey) })));
-    // const updated = await Promise.all(posts.map(async (post: typeof Post) => {
-    //   // Call getUrl function to get the URL
-    //   const photoUrl = await getUrl(post.photoKey);
-    //   const updatedUser = { ...post.user.toObject(), password: undefined };
-    //   // Create a new post object with updated user and photoUrl
-    //   return { ...post.toObject(), user: updatedUser, photoUrl };
-    // }));
     const updated = await updatePhotoUrls(posts);
-
-    //   ; // Convert to object to avoid modifying Mongoose document directly
-    res.json(new SuccessResponseDto(updated)); // Assuming SuccessResponseDto is not needed and you want to send the posts directly
+    res.json(new SuccessResponseDto(updated));
   } catch (e: unknown) {
     console.log(e);
     next(e);
@@ -46,12 +33,7 @@ export const getPostsById = async (req: Request, res: Response, next: NextFuncti
     post.photoUrl = await getUrl(post.photoKey);
     res.json(new SuccessResponseDto(post));
   } catch (e: unknown) {
-    if (e instanceof ZodError) {
-      next(new HttpException(e.message, HttpClientError.BadRequest));
-    } else {
-      console.log(e);
-      next(e);
-    }
+    next(e);
   }
 };
 
@@ -60,19 +42,6 @@ export const getPostsByTag = async (req: Request, res: Response, next: NextFunct
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
     await authorize(authorization);
-    // const posts = await prisma.post.findMany({
-    //   where: {
-    //     tags: {
-    //       some: {
-    //         tag: {
-    //           name: req.params.name,
-    //         },
-    //       },
-    //     },
-    //   },
-    //   include: { tags: { include: { tag: true } }, topic: true },
-    // });
-    // const updated = await Promise.all(posts.map(async (post) => ({ ...post, photoUrl: await getUrl(post.photoKey) })));
     const { name } = req.params;
     const tags = await Tag.find({ name: name }).exec();
 
@@ -107,7 +76,6 @@ export const getPostsByTopic = async (req: Request, res: Response, next: NextFun
       .populate('user')
       .exec();
     const updated = await updatePhotoUrls(posts);
-    //const updated = await Promise.all(posts.map(async (post) => ({ ...post, photoUrl: await getUrl(post.photoKey) })));
     res.json(new SuccessResponseDto(updated));
   } catch (e: unknown) {
     console.log(e);
@@ -142,7 +110,8 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     await topic.save();
 
     const key = userId + '_' + post.id;
-    await uploadFile(Buffer.from(image, 'base64'), key, 'image/png');
+    const imageVariant:string[] = extractDataAndMimeType(image);
+    await uploadFile(Buffer.from(imageVariant[0], 'base64'), key, imageVariant[1]);
     //Update user
     const user = await User.findById(userId);
     user.posts.push(post);

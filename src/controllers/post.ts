@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { uploadFile,getUrl } from '@/services/storage';
+import { uploadFile, getUrl } from '@/services/storage';
 import { PrismaClient } from '@prisma/client';
 import { SuccessResponseDto } from '@/dtos/response';
 import HttpException from '@/exceptions/httpException';
@@ -11,10 +11,8 @@ import { any, string, ZodError } from 'zod';
 import { User, Post, Topic, Tag } from '@/models/dbShema';
 import { updatePhotoUrls } from '@/utils/urlUpdater';
 
-
 export const getPosts = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
     await authorize(authorization);
@@ -30,7 +28,7 @@ export const getPosts = async (req: Request, res: Response, next: NextFunction) 
     //   // Create a new post object with updated user and photoUrl
     //   return { ...post.toObject(), user: updatedUser, photoUrl };
     // }));
-    const updated = await updatePhotoUrls(posts) ;
+    const updated = await updatePhotoUrls(posts);
 
     //   ; // Convert to object to avoid modifying Mongoose document directly
     res.json(new SuccessResponseDto(updated)); // Assuming SuccessResponseDto is not needed and you want to send the posts directly
@@ -44,15 +42,17 @@ export const getPostsById = async (req: Request, res: Response, next: NextFuncti
   try {
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
-    // await authorize(authorization);
+    await authorize(authorization);
     const id = req.params.id;
-    const posts = await Post.findById(id).populate('tags').populate('topic').populate('user').exec();
-    const updated = updatePhotoUrls(posts) ;
-    res.json(new SuccessResponseDto(updated));
+    console.log(id);
+    const post = await Post.findById(id).populate('tags').populate('topic').populate('user').exec();
+    post.photoUrl = await getUrl(post.photoKey);
+    res.json(new SuccessResponseDto(post));
   } catch (e: unknown) {
     if (e instanceof ZodError) {
       next(new HttpException(e.message, HttpClientError.BadRequest));
     } else {
+      console.log(e);
       next(e);
     }
   }
@@ -60,9 +60,9 @@ export const getPostsById = async (req: Request, res: Response, next: NextFuncti
 
 export const getPostsByTag = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // const { authorization } = req.headers;
-    // if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
-    // await authorize(authorization);
+    const { authorization } = req.headers;
+    if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    await authorize(authorization);
     // const posts = await prisma.post.findMany({
     //   where: {
     //     tags: {
@@ -83,9 +83,12 @@ export const getPostsByTag = async (req: Request, res: Response, next: NextFunct
     const tagIds = tags.map((tag: { _id: any }) => tag._id);
 
     // Find posts that have any of the found tag IDs
-    const posts = await Post.find({ tags: { $in: tagIds } }).populate('user').populate('topic').populate('tags');
+    const posts = await Post.find({ tags: { $in: tagIds } })
+      .populate('user')
+      .populate('topic')
+      .populate('tags');
 
-    const updated = await updatePhotoUrls(posts)
+    const updated = await updatePhotoUrls(posts);
     res.json(new SuccessResponseDto(updated));
   } catch (e: unknown) {
     next(e);
@@ -95,10 +98,9 @@ export const getPostsByTag = async (req: Request, res: Response, next: NextFunct
 export const getPostsByTopic = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name } = req.params;
-    console.log(name);
-    //const { authorization } = req.headers;
-    //if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
-    //await authorize(authorization);
+    const { authorization } = req.headers;
+    if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    await authorize(authorization);
     const topic = await Topic.findOne({ name });
     const posts = await Post.find({
       topic: topic._id,
@@ -107,36 +109,34 @@ export const getPostsByTopic = async (req: Request, res: Response, next: NextFun
       .populate('topic')
       .populate('user')
       .exec();
-    const updated = await updatePhotoUrls(posts) 
+    const updated = await updatePhotoUrls(posts);
     //const updated = await Promise.all(posts.map(async (post) => ({ ...post, photoUrl: await getUrl(post.photoKey) })));
     res.json(new SuccessResponseDto(updated));
   } catch (e: unknown) {
-    console.log(e)
+    console.log(e);
     next(e);
   }
 };
 
 export const createPost = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { topicName, tags, description,image } = req.body;
-    const {authorization} = req.headers;
+    const { topicName, tags, description, image } = req.body;
+    const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
-    const {userId} = await authorize(authorization);
+    const { userId } = await authorize(authorization);
 
     // Create post
     const post: typeof Post = await Post.create({
       user: userId,
       photoKey: '',
-      photoUrl: '', // Assuming it's populated later
+      photoUrl: '',
       description: description,
-      // topic: '',
-      // tags: '',
     });
     // Create tags
 
-    const modifiedTag =  tags.map((tag:any) => ({ ...tag, post: post._id, score:parseIntPlus(tag.score)}))
-    console.log(modifiedTag)
-    const createdTags = await Tag.create(modifiedTag)
+    const modifiedTag = tags.map((tag: any) => ({ ...tag, post: post._id, score: parseIntPlus(tag.score) }));
+    console.log(modifiedTag);
+    const createdTags = await Tag.create(modifiedTag);
 
     // Create topic
     const topic = await Topic.findOneAndUpdate({ name: topicName }, { name: topicName }, { upsert: true, new: true });
@@ -152,12 +152,12 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     await user.save();
     //Asign each field to post
     post.photoKey = key;
-    post.tags= createdTags;
+    post.tags = createdTags;
     post.topic = topic._id;
     await post.save();
     const populatedPost = await Post.findById(post._id).populate('tags').populate('user').populate('topic');
-    const updated  = await updatePhotoUrls([populatedPost]) ;
-    res.json(new SuccessResponseDto(updated,HttpSuccess.Created)); // Assuming you want to send the created post directly in the response
+    populatedPost.photoUrl = await getUrl(populatedPost.photoKey);
+    res.json(new SuccessResponseDto(populatedPost, HttpSuccess.Created)); // Assuming you want to send the created post directly in the response
   } catch (e: unknown) {
     console.log(e);
     next(e);

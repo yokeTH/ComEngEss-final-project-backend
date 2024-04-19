@@ -1,8 +1,8 @@
 import { getUrl } from '@/services/storage';
 import { Post, PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
-export const updatePhotoUrls = async (updatePhoto:Post[]) => {
-  const allPosts = updatePhoto
+export const updatePhotoUrls = async (updatePhoto: Post[]) => {
+  const allPosts = updatePhoto;
 
   // Iterate through each post
   for (const post of allPosts) {
@@ -11,9 +11,9 @@ export const updatePhotoUrls = async (updatePhoto:Post[]) => {
     // Update the photoUrl field of the post
     await prisma.post.update({
       where: { id: post.id },
-      data: { photoUrl: photoUrl }
+      data: { photoUrl: photoUrl },
     });
   }
 
-  console.log("All photoUrls updated successfully!");
+  console.log('All photoUrls updated successfully!');
 };

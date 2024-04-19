@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const jwtSign = async (payload: any, secret?: string) => {
   const headers = {
     alg: 'HS256',

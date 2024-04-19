@@ -126,7 +126,10 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
       },
     });
     const key = userId + '_' + post.id;
-    await uploadFile(req.file?.buffer!, key, req.file?.mimetype!);
+    if (!req.file?.buffer || !req.file?.mimetype) {
+      throw new HttpException();
+    }
+    await uploadFile(req.file?.buffer, key, req.file?.mimetype);
     const updatedPost = await prisma.post.update({
       where: {
         id: post.id,

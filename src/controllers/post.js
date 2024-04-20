@@ -1,14 +1,14 @@
-import { NextFunction, Request, Response } from 'express';
-import { uploadFile, getUrl } from '@/services/storage';
-import { SuccessResponseDto } from '@/dtos/response';
-import HttpException from '@/exceptions/httpException';
-import { HttpClientError, HttpSuccess } from '@/enums/http';
-import { authorize } from '@/utils/authorizer';
-import { parseIntPlus } from '@/utils/zodChecker';
-import { User, Post, Topic, Tag } from '@/models/dbShema';
-import { extractDataAndMimeType, updatePhotoUrls } from '@/utils/image';
+import getUrl from '../services/r2_storage/getUrl.js';
+import uploadFile from '../services/r2_storage/upload.js';
+import { SuccessResponseDto } from '../dtos/response.js';
+import HttpException from '../exceptions/httpException.js';
+import { HttpClientError, HttpSuccess } from '../enums/http.js';
+import { authorize } from '../utils/authorizer.js';
+import { parseIntPlus } from '../utils/zodChecker.js';
+import { User, Post, Topic, Tag } from '../models/dbShema.js';
+import { extractDataAndMimeType, updatePhotoUrls } from '../utils/image.js';
 
-export const getPosts = async (req: Request, res: Response, next: NextFunction) => {
+export const getPosts = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
@@ -16,13 +16,13 @@ export const getPosts = async (req: Request, res: Response, next: NextFunction) 
     const posts = await Post.find({}).populate('tags').populate('user').populate('topic').exec();
     const updated = await updatePhotoUrls(posts);
     res.json(new SuccessResponseDto(updated));
-  } catch (e: unknown) {
+  } catch (e) {
     console.log(e);
     next(e);
   }
 };
 
-export const getPostsById = async (req: Request, res: Response, next: NextFunction) => {
+export const getPostsById = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
@@ -34,12 +34,12 @@ export const getPostsById = async (req: Request, res: Response, next: NextFuncti
       post.photoUrl = await getUrl(post.photoKey);
     }
     res.json(new SuccessResponseDto(post));
-  } catch (e: unknown) {
+  } catch (e) {
     next(e);
   }
 };
 
-export const getPostsByTag = async (req: Request, res: Response, next: NextFunction) => {
+export const getPostsByTag = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
     if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
@@ -47,7 +47,7 @@ export const getPostsByTag = async (req: Request, res: Response, next: NextFunct
     const { name } = req.params;
     const tags = await Tag.find({ name: name }).exec();
     // Extract tag IDs
-    const tagIds = tags.map((tag: { _id: string }) => tag._id);
+    const tagIds = tags.map((tag) => tag._id);
 
     // Find posts that have any of the found tag IDs
     const posts = await Post.find({ tags: { $in: tagIds } })
@@ -57,12 +57,12 @@ export const getPostsByTag = async (req: Request, res: Response, next: NextFunct
 
     const updated = await updatePhotoUrls(posts);
     res.json(new SuccessResponseDto(updated));
-  } catch (e: unknown) {
+  } catch (e) {
     next(e);
   }
 };
 
-export const getPostsByTopic = async (req: Request, res: Response, next: NextFunction) => {
+export const getPostsByTopic = async (req, res, next) => {
   try {
     const { name } = req.params;
     const { authorization } = req.headers;
@@ -78,13 +78,13 @@ export const getPostsByTopic = async (req: Request, res: Response, next: NextFun
       .exec();
     const updated = await updatePhotoUrls(posts);
     res.json(new SuccessResponseDto(updated));
-  } catch (e: unknown) {
+  } catch (e) {
     console.log(e);
     next(e);
   }
 };
 
-export const createPost = async (req: Request, res: Response, next: NextFunction) => {
+export const createPost = async (req, res, next) => {
   try {
     const { topicName, tags, description, image } = req.body;
     const { authorization } = req.headers;
@@ -96,7 +96,7 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     const { userId } = await authorize(authorization);
 
     // Create post
-    const post: typeof Post = await Post.create({
+    const post = await Post.create({
       user: userId,
       photoKey: '',
       photoUrl: '',
@@ -104,7 +104,11 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     });
     // Create tags
 
-    const modifiedTag = tags.map((tag: any) => ({ ...tag, post: post._id, score: parseIntPlus(tag.score) }));
+    const modifiedTag = tags.map((tag) => ({
+      ...tag,
+      post: post._id,
+      score: parseIntPlus(tag.score),
+    }));
     console.log(modifiedTag);
     const createdTags = await Tag.create(modifiedTag);
 
@@ -115,7 +119,7 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     await topic.save();
 
     const key = userId + '_' + post.id;
-    const imageVariant: string[] = extractDataAndMimeType(image);
+    const imageVariant = extractDataAndMimeType(image);
     await uploadFile(Buffer.from(imageVariant[0], 'base64'), key, imageVariant[1]);
     //Update user
     const user = await User.findById(userId);
@@ -129,7 +133,7 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
     const populatedPost = await Post.findById(post._id).populate('tags').populate('user').populate('topic');
     populatedPost.photoUrl = await getUrl(populatedPost.photoKey);
     res.json(new SuccessResponseDto(populatedPost, HttpSuccess.Created)); // Assuming you want to send the created post directly in the response
-  } catch (e: unknown) {
+  } catch (e) {
     console.log(e);
     next(e);
   }

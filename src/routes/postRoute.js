@@ -1,6 +1,5 @@
 import express from 'express';
-import fileMiddleware from '@/middlewares/fileMiddleware';
-import * as postController from '../controllers/post';
+import * as postController from '../controllers/post.js';
 
 const router = express.Router();
 

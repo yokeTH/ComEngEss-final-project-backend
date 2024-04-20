@@ -1,9 +1,10 @@
-import PostRoute from './routes/postRoute';
-import UserRoute from './routes/userRoute';
+import PostRoute from './routes/postRoute.js';
+import UserRoute from './routes/userRoute.js';
 import cors from 'cors';
 import express from 'express';
-import logMiddleware from './middlewares/logMiddleware';
-import { errorMiddleware } from './middlewares/errorMiddleware';
+import logMiddleware from './middlewares/logMiddleware.js';
+import { errorMiddleware } from './middlewares/errorMiddleware.js';
+import './config/db.js';
 
 //body-praser
 

@@ -1,13 +1,12 @@
-import { NextFunction, Request, Response } from 'express';
-import { bcryptHash, bcryptCompare } from '@/utils/bcrypt';
-import { jwtSign } from '@/services/jwt';
-import HttpException from '@/exceptions/httpException';
-import { HttpClientError, HttpSuccess } from '@/enums/http';
-import { SuccessResponseDto } from '@/dtos/response';
-import { User } from '@/models/dbShema';
-import { authorize } from '@/utils/authorizer';
+import { bcryptHash, bcryptCompare } from '../utils/bcrypt.js';
+import { jwtSign } from '../utils/jwt.js';
+import HttpException from '../exceptions/httpException.js';
+import { HttpClientError, HttpSuccess } from '../enums/http.js';
+import { SuccessResponseDto } from '../dtos/response.js';
+import { User } from '../models/dbShema.js';
+import { authorize } from '../utils/authorizer.js';
 
-export const createUser = async (req: Request, res: Response, next: NextFunction) => {
+export const createUser = async (req, res, next) => {
   try {
     const { password, username, email } = req.body;
     if (!password) throw new HttpException('require password', HttpClientError.Unauthorized);
@@ -21,12 +20,12 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     });
     user.password = undefined;
     res.json(new SuccessResponseDto(user, HttpSuccess.Created));
-  } catch (e: unknown) {
+  } catch (e) {
     next(e);
   }
 };
 
-export const login = async (req: Request, res: Response, next: NextFunction) => {
+export const login = async (req, res, next) => {
   try {
     const { password, username } = req.body;
     if (!username) throw new HttpException('require username', HttpClientError.Unauthorized);
@@ -41,8 +40,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const match = await bcryptCompare(password, user.password);
     if (match) {
       // Generate access token
-      const exptime: number = Math.floor(Date.now() / 1000) + 10 * 60 * 60;
-      const accessToken = await jwtSign({ userId: user._id, exp: exptime }, process.env.TOKEN_SECRET!);
+      const exptime = Math.floor(Date.now() / 1000) + 10 * 60 * 60;
+      const accessToken = await jwtSign({ userId: user._id, exp: exptime }, process.env.TOKEN_SECRET);
       res.json(
         new SuccessResponseDto({
           iat: Date.now(),
@@ -53,16 +52,16 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     } else {
       throw new HttpException('Wrong password', HttpClientError.BadRequest);
     }
-  } catch (e: unknown) {
+  } catch (e) {
     next(e);
   }
 };
 
-export const refreshtoken = async (req: Request, res: Response) => {
+export const refreshtoken = async (req, res) => {
   try {
     const { userId } = await authorize(req.body.token);
-    const exptime: number = Math.floor(Date.now() / 1000) + 10 * 60 * 60;
-    const accessToken = await jwtSign({ userId: userId, exp: exptime }, process.env.TOKEN_SECRET!);
+    const exptime = Math.floor(Date.now() / 1000) + 10 * 60 * 60;
+    const accessToken = await jwtSign({ userId: userId, exp: exptime }, process.env.TOKEN_SECRET);
     res.json(
       new SuccessResponseDto({
         iat: Date.now(),
@@ -70,7 +69,7 @@ export const refreshtoken = async (req: Request, res: Response) => {
         access_token: accessToken,
       }),
     );
-  } catch (e: unknown) {
+  } catch (e) {
     res.json(new SuccessResponseDto('expired'));
   }
 };

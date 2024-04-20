@@ -1,7 +1,7 @@
 // https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html
 //
 import crypto from 'crypto';
-import { getSignature, getSigningKey } from './signSignature';
+import { getSignature, getSigningKey } from './signSignature.js';
 
 const accountId = process.env.R2_ACCOUNT_ID || '';
 const bucketName = 'cee';
@@ -10,7 +10,7 @@ const secretAccessKey = process.env.R2_ACCESS_KEY_SECRET || '';
 const region = 'apac';
 const host = `${accountId}.r2.cloudflarestorage.com`;
 
-async function uploadFile(fileContent: Buffer, key: string, contentType: string) {
+async function uploadFile(fileContent, key, contentType) {
   const url = `https://${host}/${bucketName}/${key}`;
   const timestamp = new Date().toISOString().replace(/[:\-]|\.\d{3}/g, '');
   const date = timestamp.slice(0, 8);

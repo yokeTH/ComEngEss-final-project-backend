@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const jwtSign = async (payload: any, secret?: string) => {
+const jwtSign = async (payload, secret) => {
   const headers = {
     alg: 'HS256',
     typ: 'JWT',
@@ -15,7 +15,7 @@ const jwtSign = async (payload: any, secret?: string) => {
   return `${base64Headers}.${base64Payload}.${signature}`;
 };
 
-const jwtVerify = async (token: string, secret?: string) => {
+const jwtVerify = async (token, secret) => {
   const [base64Headers, base64Payload, signature] = token.split('.');
 
   const headers = JSON.parse(atob(base64Headers));

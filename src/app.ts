@@ -10,14 +10,14 @@ import { errorMiddleware } from './middlewares/errorMiddleware';
 const app = express();
 
 app.use(logMiddleware);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // allow request from other origin (Frontend which is at different port)
 app.use(cors());
 
 // use routes
-app.use('/post', PostRoute);
+app.use('/posts', PostRoute);
 app.use('/user', UserRoute);
 app.use(errorMiddleware);
 export default app;

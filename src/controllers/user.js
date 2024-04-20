@@ -44,7 +44,7 @@ export const login = async (req, res, next) => {
       const accessToken = await jwtSign({ userId: user._id, exp: exptime }, process.env.TOKEN_SECRET);
       res.json(
         new SuccessResponseDto({
-          iat: Date.now(),
+          iat: Math.floor(Date.now() / 1000),
           exp: exptime,
           access_token: accessToken,
         }),
@@ -64,7 +64,7 @@ export const refreshtoken = async (req, res) => {
     const accessToken = await jwtSign({ userId: userId, exp: exptime }, process.env.TOKEN_SECRET);
     res.json(
       new SuccessResponseDto({
-        iat: Date.now(),
+        iat: Math.floor(Date.now() / 1000),
         exp: exptime,
         access_token: accessToken,
       }),

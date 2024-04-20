@@ -33,6 +33,7 @@ export const getPostsById = async (req, res, next) => {
     if (post) {
       post.photoUrl = await getUrl(post.photoKey);
     }
+    post.user.password = undefined;
     res.json(new SuccessResponseDto(post));
   } catch (e) {
     next(e);
@@ -132,6 +133,7 @@ export const createPost = async (req, res, next) => {
     await post.save();
     const populatedPost = await Post.findById(post._id).populate('tags').populate('user').populate('topic');
     populatedPost.photoUrl = await getUrl(populatedPost.photoKey);
+    populatedPost.user.password = undefined;
     res.json(new SuccessResponseDto(populatedPost, HttpSuccess.Created)); // Assuming you want to send the created post directly in the response
   } catch (e) {
     console.log(e);

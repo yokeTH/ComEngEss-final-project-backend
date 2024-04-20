@@ -1,8 +1,4 @@
-import { mongo } from "mongoose";
-
-const mongoose = require('mongoose');
-
-const { Schema } = mongoose;
+import mongoose, { Schema } from 'mongoose';
 
 const userSchema = new Schema({
   username: { type: String, unique: true },
@@ -32,7 +28,7 @@ const topicSchema = new Schema({
 });
 
 const tagSchema = new Schema({
-  name: { type: String ,unique:false},
+  name: { type: String, unique: false },
   score: Number,
   post: { type: Schema.Types.ObjectId, ref: 'Post' },
   createdAt: { type: Date, default: Date.now },
@@ -43,6 +39,3 @@ export const User = mongoose.model('User', userSchema);
 export const Post = mongoose.model('Post', postSchema);
 export const Topic = mongoose.model('Topic', topicSchema);
 export const Tag = mongoose.model('Tag', tagSchema);
-
-
-

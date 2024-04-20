@@ -30,7 +30,9 @@ export const getPostsById = async (req: Request, res: Response, next: NextFuncti
     const id = req.params.id;
     console.log(id);
     const post = await Post.findById(id).populate('tags').populate('topic').populate('user').exec();
-    post.photoUrl = await getUrl(post.photoKey);
+    if (post) {
+      post.photoUrl = await getUrl(post.photoKey);
+    }
     res.json(new SuccessResponseDto(post));
   } catch (e: unknown) {
     next(e);
@@ -45,7 +47,7 @@ export const getPostsByTag = async (req: Request, res: Response, next: NextFunct
     const { name } = req.params;
     const tags = await Tag.find({ name: name }).exec();
     // Extract tag IDs
-    const tagIds = tags.map((tag: { _id: any }) => tag._id);
+    const tagIds = tags.map((tag: { _id: string }) => tag._id);
 
     // Find posts that have any of the found tag IDs
     const posts = await Post.find({ tags: { $in: tagIds } })

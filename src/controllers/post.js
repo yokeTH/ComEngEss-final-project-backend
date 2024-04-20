@@ -11,7 +11,7 @@ import { extractDataAndMimeType, updatePhotoUrls } from '../utils/image.js';
 export const getPosts = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
-    if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    if (!authorization) throw new HttpException('require authorization', HttpClientError.BadRequest);
     await authorize(authorization);
     const posts = await Post.find({}).populate('tags').populate('user').populate('topic').exec();
     const updated = await updatePhotoUrls(posts);
@@ -67,7 +67,7 @@ export const getPostsByTopic = async (req, res, next) => {
   try {
     const { name } = req.params;
     const { authorization } = req.headers;
-    if (!authorization) throw new HttpException('require authorization', HttpClientError.Unauthorized);
+    if (!authorization) throw new HttpException('require authorization', HttpClientError.BadRequest);
     await authorize(authorization);
     const topic = await Topic.findOne({ name });
     const posts = await Post.find({

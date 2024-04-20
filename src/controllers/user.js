@@ -9,9 +9,9 @@ import { authorize } from '../utils/authorizer.js';
 export const createUser = async (req, res, next) => {
   try {
     const { password, username, email } = req.body;
-    if (!password) throw new HttpException('require password', HttpClientError.Unauthorized);
-    if (!username) throw new HttpException('require username', HttpClientError.Unauthorized);
-    if (!email) throw new HttpException('require email', HttpClientError.Unauthorized);
+    if (!password) throw new HttpException('require password', HttpClientError.BadRequest);
+    if (!username) throw new HttpException('require username', HttpClientError.BadRequest);
+    if (!email) throw new HttpException('require email', HttpClientError.BadRequest);
     const hashedPassword = await bcryptHash(password, 10);
     const user = await User.create({
       username: username,
@@ -28,8 +28,8 @@ export const createUser = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { password, username } = req.body;
-    if (!username) throw new HttpException('require username', HttpClientError.Unauthorized);
-    if (!password) throw new HttpException('require password', HttpClientError.Unauthorized);
+    if (!username) throw new HttpException('require username', HttpClientError.BadRequest);
+    if (!password) throw new HttpException('require password', HttpClientError.BadRequest);
     // Find user by username
     const user = await User.findOne({ username }).exec();
     if (!user) {

@@ -21,6 +21,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
         password: hashedPassword,
         email: email,
     });
+    user.password = undefined;
     res.json(new SuccessResponseDto(user, HttpSuccess.Created));
   } catch (e: unknown) {
       next(e)

@@ -1,5 +1,6 @@
 import PostRoute from './routes/postRoute.js';
 import UserRoute from './routes/userRoute.js';
+import TagtopRoute from './routes/tagAndTopRoute.js';
 import cors from 'cors';
 import express from 'express';
 import logMiddleware from './middlewares/logMiddleware.js';
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 
 // use routes
+app.use('/tagtop', TagtopRoute);
 app.use('/posts', PostRoute);
 app.use('/user', UserRoute);
 app.use(errorMiddleware);

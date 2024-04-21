@@ -70,6 +70,7 @@ export const getPostsByTopic = async (req, res, next) => {
     if (!authorization) throw new HttpException('require authorization', HttpClientError.BadRequest);
     await authorize(authorization);
     const topic = await Topic.findOne({ name });
+    if (!topic) res.json(new SuccessResponseDto([]))
     const posts = await Post.find({
       topic: topic._id,
     })
@@ -116,16 +117,13 @@ export const createPost = async (req, res, next) => {
     // Create topic
     const topic = await Topic.findOneAndUpdate({ name: topicName }, { name: topicName }, { upsert: true, new: true });
 
-    topic.posts.push(post._id);
-    await topic.save();
+    // topic.posts.push(post._id);
+    // await topic.save();
 
     const key = userId + '_' + post.id;
     const imageVariant = extractDataAndMimeType(image);
     await uploadFile(Buffer.from(imageVariant[0], 'base64'), key, imageVariant[1]);
-    //Update user
-    const user = await User.findById(userId);
-    user.posts.push(post);
-    await user.save();
+
     //Asign each field to post
     post.photoKey = key;
     post.tags = createdTags;

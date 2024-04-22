@@ -70,7 +70,7 @@ export const getPostsByTopic = async (req, res, next) => {
     if (!authorization) throw new HttpException('require authorization', HttpClientError.BadRequest);
     await authorize(authorization);
     const topic = await Topic.findOne({ name });
-    if (!topic) res.json(new SuccessResponseDto([]))
+    if (!topic) res.json(new SuccessResponseDto([]));
     const posts = await Post.find({
       topic: topic._id,
     })
@@ -106,19 +106,29 @@ export const createPost = async (req, res, next) => {
     });
     // Create tags
 
+    tags.every((tag) => {
+      const keys = Object.keys(tag);
+      if (keys.includes('name') && keys.includes('score')) {
+        return true; // Continue checking other tags
+      } else if (keys.includes('name')) {
+        // Handle condition 2: tag has only 'name'
+        throw new HttpException("some tag's score field are missing", HttpClientError.BadRequest);
+      } else if (keys.includes('score')) {
+        // Handle condition 3: tag has only 'score'
+        throw new HttpException("some tag's name field are missing", HttpClientError.BadRequest);
+      } else {
+        throw new HttpException("some tag's name and score field are missing", HttpClientError.BadRequest);
+      }
+    });
+
     const modifiedTag = tags.map((tag) => ({
       ...tag,
-      post: post._id,
       score: parseIntPlus(tag.score),
     }));
-    console.log(modifiedTag);
     const createdTags = await Tag.create(modifiedTag);
 
     // Create topic
     const topic = await Topic.findOneAndUpdate({ name: topicName }, { name: topicName }, { upsert: true, new: true });
-
-    // topic.posts.push(post._id);
-    // await topic.save();
 
     const key = userId + '_' + post.id;
     const imageVariant = extractDataAndMimeType(image);
